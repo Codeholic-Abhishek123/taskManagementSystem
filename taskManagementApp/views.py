@@ -1,5 +1,4 @@
-from django.forms.models import model_to_dict
-from django.contrib.auth.hashers import make_password, check_password
+
 from .serializer import *
 from .models import *
 from rest_framework.views import APIView
@@ -28,20 +27,25 @@ class ListUsers(APIView):
     def get(self, request, format=None):
        user = User.objects.all()
        serializer = UserSerializer(user,many=True)
-       return Response({'payload':serializer.data})
+       return Response({
+        'success':True,
+        'message':'All Users fetched.',
+        'payload':serializer.data
+        })
 
 class CustomAuthToken(ObtainAuthToken):
 
-    def authenticate(self, request, username=None, password=None, **kwargs):
-        UserModel = get_user_model()
-        try:
-            user = UserModel.objects.get(email=username)
-        except UserModel.DoesNotExist:
-            return None
-        else:
-            if user.check_password(password):
-                return user
-        return None
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data,
+                                           context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({
+            'token': token.key,
+            'user_id': user.pk,
+            'email': user.email
+        })
 
 @api_view(['POST'])
 @permission_classes((permissions.AllowAny,))
@@ -61,14 +65,16 @@ class Projects(APIView):
     def get(self,request):
         project_obj = Project.objects.all()
         serializer = ProjectSerializer(project_obj,many=True)
-        return Response({'payload':serializer.data})
+        return Response({
+        'success':True,
+        'message':'All Projects fetched.',
+        'payload':serializer.data
+        })
 
     def post(self,request):
         data = request.data.dict()
         data['user_id']= request.user.id
         serializer = ProjectSerializer(data = data)
-        
-        
         if not serializer.is_valid():
             print(serializer.errors)
             return Response({'status':403,'errors':serializer.errors,'message':"something is wrong"})

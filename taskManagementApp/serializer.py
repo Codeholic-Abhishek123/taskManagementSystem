@@ -18,7 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
         return lower_email
     class Meta:
         model = User
-        fields = ('username','first_name','last_name','email','password')
+        fields = ('id','username', 'first_name', 'last_name', 'email', 'is_active','password')
 
     def create(self, validated_data):
         user = User(
@@ -32,10 +32,6 @@ class UserSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['username', 'first_name', 'last_name', 'email', 'is_active', 'id']
 
 class TaskSerializer(serializers.ModelSerializer):
     class Meta:
